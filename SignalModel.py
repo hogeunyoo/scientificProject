@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from scipy.io import wavfile
 from scipy.signal import lfilter, butter, hilbert
 import numpy as np
@@ -6,10 +8,11 @@ PICC_FREQ = 847500 # Hz
 
 
 class Signal:
-    def __init__(self, samplerate, data, lable):
+    def __init__(self, samplerate, data, file_path):
         self.samplerate = samplerate
         self.data = data
-        self.lable = lable
+        self.file_path = file_path
+        self.label = file_path.parent.name
 
     def ATQA_SAMPLE_SIZE(self):
         return round(1 / 847500 * 8 * self.samplerate * 18.5)
@@ -29,7 +32,6 @@ class Signal:
 
 
 def default_normalized_signal(first_signal, second_signal, accuracy=1000, sample_size=3493):
-
     __first_sink, __second_sink = get_sync_sample_position(first_signal, second_signal)
 
     filtered_first_signal = first_signal.butter_bandpass_filter(
@@ -56,18 +58,6 @@ def default_normalized_signal(first_signal, second_signal, accuracy=1000, sample
             __ratio = 10 * amp / accuracy
     return __ratio
 
-#
-# def get_envelop_signal(first_signal: np.array, second_signal: np.array, first_sink: int, second_sink: int):
-#     first_signal = get_envelop(first_signal)
-#     second_signal = get_envelop(second_signal)
-#     __ratio = first_signal[first_sink:first_sink + round(t_half_ATQA_one)].max() / second_signal[
-#                                                                                    second_sink:second_sink + round(
-#                                                                                        t_half_ATQA_two)].max()
-#     second_signal = second_signal * __ratio
-#
-#     return first_signal[first_sink - 20:first_sink + t_half_ATQA_one + 20], second_signal[
-#                                                                             second_sink - 20:second_sink + t_half_ATQA_two + 20]
-#
 
 def get_sync_sample_position(first_signal: Signal, second_signal: Signal):
     filtered_first_signal = first_signal.butter_bandpass_filter(
@@ -115,13 +105,112 @@ class SignalModel:
     def __init__(self):
         self.signal_data = []
 
-    def read_wav_file(self, file):
-        __current_signal = Signal(wavfile.read(file)[0], wavfile.read(file)[1], file)
+    def open_wav_folders(self, folder_path):
+        data_dir = Path(folder_path)
+        if data_dir.is_dir():
+            for file_path in data_dir.glob('*.wav'):
+                self.read_wav_file(file_path)
+        else:
+            print("ERROR : Please input wav files")
+
+    def read_wav_file(self, file_path):
+        __current_signal = Signal(wavfile.read(file_path)[0], wavfile.read(file_path)[1], file_path)
 
         if len(self.signal_data) != 0:
             if self.signal_data[0].samplerate == __current_signal.samplerate:
                 self.signal_data.append(__current_signal)
             else:
-                print('ERROR : 신호 파일 불량')
+                print('ERROR : 신호 파일 불량, %s' % (str(file_path)))
         else:
             self.signal_data.append(__current_signal)
+
+    def get_current_label_list(self):
+        __current_date = self.signal_data
+        __current_label_list = []
+        for data in __current_date:
+            if data.label not in __current_label_list:
+                __current_label_list.append(data.label)
+        print(__current_label_list)
+        return __current_label_list
+
+    def get_sorted_list(self, label):
+        __current_data = self.signal_data
+        __sorted_list = []
+        for data in __current_data:
+            if data.label == label:
+                __sorted_list.append(data)
+        return __sorted_list
+
+    def get_enveloped_normalized_data(self, start=0, stop=93):
+        __first_signal_data_for_ref = self.signal_data[0]
+        __sync_value = []
+        for data in self.signal_data[1:]:
+            __sync_x, __sync_y = get_sync_sample_position(
+                first_signal=__first_signal_data_for_ref,
+                second_signal=data
+            )
+
+            if len(__sync_value) == 0:
+                __sync_value.append(__sync_x)
+                __sync_value.append(__sync_y)
+            else:
+                __sync_value.append(__sync_y)
+
+        __enveloped_value = []
+        for i in range(len(self.signal_data)):
+            __signal_data = self.signal_data[i]
+            __bandpassed_data = __signal_data.butter_bandpass_filter(
+                lowcut=PICC_FREQ - PICC_FREQ / 2,
+                highcut=PICC_FREQ + PICC_FREQ / 2,
+                order=1)
+
+            __hilbert_envelope = Signal.hilbert_envelope(Signal(data=__bandpassed_data,
+                                                                file_path=__signal_data.file_path,
+                                                                samplerate=__signal_data.samplerate))
+            __ratio = (
+                    max(Signal.hilbert_envelope(__first_signal_data_for_ref)[__sync_value[0]+start:__sync_value[0]+stop])/
+                    max(__hilbert_envelope[__sync_value[i]+start:__sync_value[i]+stop])
+            )
+
+            __enveloped_value.append(
+                Signal(
+                    data=__hilbert_envelope[__sync_value[i] - min(__sync_value):] * __ratio,
+                    file_path=__signal_data.file_path,
+                    samplerate=__signal_data.samplerate)
+                )
+        return __enveloped_value
+
+
+
+
+    def get_normalized_amp_data(self):
+        __sync_value = []
+        __sync_ratio_value = []
+        for data in self.signal_data[1:]:
+            __first_signal_data_for_ref = self.signal_data[0]
+            __ratio = default_normalized_signal(
+                first_signal=__first_signal_data_for_ref,
+                second_signal=data)
+            __sync_x, __sync_y = get_sync_sample_position(
+                first_signal=__first_signal_data_for_ref,
+                second_signal=data)
+            if len(__sync_value) == 0 and len(__sync_ratio_value) == 0:
+                __sync_value.append(__sync_x)
+                __sync_value.append(__sync_y)
+                __sync_ratio_value.append(1)
+                __sync_ratio_value.append(__ratio)
+            else:
+                __sync_value.append(__sync_y)
+                __sync_ratio_value.append(__ratio)
+
+        __sync_data = []
+        for i in range(len(self.signal_data)):
+            __sync_data.append(
+                Signal(
+                    data=self.signal_data[__sync_value[i] - min(__sync_value):] * __sync_ratio_value[i],
+                    samplerate=self.signal_data[i].samplerate,
+                    file_path=self.signal_data[i].file_path
+                )
+            )
+
+        return __sync_ratio_value
