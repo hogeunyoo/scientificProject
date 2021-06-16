@@ -1,9 +1,11 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import sys
+from pathlib import Path
 import numpy as np
 from scipy.io import wavfile
 from scipy.signal import lfilter, butter, hilbert
+from Tensorflow import Tensorflow
 
 from SignalModel import SignalModel, Signal, get_sync_sample_position, default_normalized_signal
 
@@ -15,9 +17,12 @@ class MainViewController:
     def __init__(self):
         self.model = SignalModel()
         self.read_wav_files()
-        # self.show_frist_raise_signal2()
+        self.show_enveloped_signal()
+        Tensorflow(data_dir=Path('./data/tensorflow/envelop'))
+        # Tensorflow(data_dir=Path('./data/wavFiles'))
+
         # self.show_frist_raise_signal3()
-        self.show_frist_raise_signal()
+        # self.show_frist_raise_signal()
         # self.show_band()
         # self.nomalized_signal()
 
@@ -95,9 +100,10 @@ class MainViewController:
 
         plt.show()
 
-    def show_frist_raise_signal2(self):
+    def show_enveloped_signal(self):
         __label_list = self.model.get_current_label_list()
         for data in self.model.get_enveloped_normalized_data(stop=94):
+            self.model.write_wav_file(data, 'envelop')
             plt.plot(data.data, color='C%d' % __label_list.index(data.label))
 
         plt.legend()

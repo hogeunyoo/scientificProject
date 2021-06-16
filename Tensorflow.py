@@ -13,23 +13,15 @@ from IPython import display
 
 
 class Tensorflow:
-    def __init__(self):
+    def __init__(self, data_dir: pathlib.Path):
+        self.data_dir = data_dir
+
         # Set seed for experiment reproducibility
         seed = 42
         tf.random.set_seed(seed)
         np.random.seed(seed)
-        print(tf.__version__)
-
-        data_dir = pathlib.Path('data/mini_speech_commands')
-        if not data_dir.exists():
-            tf.keras.utils.get_file(
-                'mini_speech_commands.zip',
-                origin="http://storage.googleapis.com/download.tensorflow.org/data/mini_speech_commands.zip",
-                extract=True,
-                cache_dir='.', cache_subdir='data')
 
         commands = np.array(tf.io.gfile.listdir(str(data_dir)))
-        commands = commands[commands != 'README.md']
         print('Commands:', commands)
 
         filenames = tf.io.gfile.glob(str(data_dir) + '/*/*')
@@ -40,9 +32,9 @@ class Tensorflow:
               len(tf.io.gfile.listdir(str(data_dir / commands[0]))))
         print('Example file tensor:', filenames[0])
 
-        train_files = filenames[:6400]
-        val_files = filenames[6400: 6400 + 800]
-        test_files = filenames[-800:]
+        train_files = filenames[:120]
+        val_files = filenames[120: 120 + 40]
+        test_files = filenames[-40:]
 
         print('Training set size', len(train_files))
         print('Validation set size', len(val_files))
@@ -66,7 +58,6 @@ class Tensorflow:
             return waveform, label
 
         AUTOTUNE = tf.data.AUTOTUNE
-        print(AUTOTUNE)
         files_ds = tf.data.Dataset.from_tensor_slices(train_files)
         waveform_ds = files_ds.map(get_waveform_and_label, num_parallel_calls=AUTOTUNE)
 
@@ -79,7 +70,7 @@ class Tensorflow:
             c = i % cols
             ax = axes[r][c]
             ax.plot(audio.numpy())
-            ax.set_yticks(np.arange(-1.2, 1.2, 0.2))
+            ax.set_yticks(np.arange(-0.05, 0.05, 0.01))
             label = label.numpy().decode('utf-8')
             ax.set_title(label)
 
@@ -130,26 +121,11 @@ class Tensorflow:
         plt.show()
 
         def get_spectrogram_and_label_id(audio, label):
-            print(audio)
-            print(label)
             spectrogram = get_spectrogram(audio)
             spectrogram = tf.expand_dims(spectrogram, -1)
             label_id = tf.argmax(label == commands)
             return spectrogram, label_id
 
-        def get_spectrogram_and_label_id(audio, label):
-            print('audio:', end='')
-            print(audio)
-            print(label)
-            spectrogram = get_spectrogram(audio)
-            spectrogram = tf.expand_dims(spectrogram, -1)
-            label_id = tf.argmax(label == commands)
-            return spectrogram, label_id
-
-        print(AUTOTUNE)
-        print(label)
-        print(audio)
-        print(label == commands)
         spectrogram_ds = waveform_ds.map(
             get_spectrogram_and_label_id, num_parallel_calls=AUTOTUNE)
 

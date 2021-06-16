@@ -1,5 +1,4 @@
-from pathlib import Path
-
+from pathlib import Path, PurePath
 from scipy.io import wavfile
 from scipy.signal import lfilter, butter, hilbert
 import numpy as np
@@ -123,6 +122,18 @@ class SignalModel:
                 print('ERROR : 신호 파일 불량, %s' % (str(file_path)))
         else:
             self.signal_data.append(__current_signal)
+
+    def write_wav_file(self, signal: Signal, name: str):
+        dir_path = Path('./data/tensorflow/' + name + '/' + signal.label)
+        dir_path.mkdir(parents=True, exist_ok=True)
+        __data_num = 0
+        __file_path = PurePath(signal.label + str(__data_num) + '.wav')
+        while (dir_path/__file_path).exists():
+            __data_num += 1
+            __file_path = PurePath(signal.label + str(__data_num) + '.wav')
+        print(dir_path/__file_path)
+        print(signal.data)
+        wavfile.write(dir_path/__file_path, signal.samplerate, signal.data.astype(np.int16))
 
     def get_current_label_list(self):
         __current_date = self.signal_data
