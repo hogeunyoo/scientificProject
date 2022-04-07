@@ -13,8 +13,11 @@ from IPython import display
 
 
 class Tensorflow:
-    def __init__(self, data_dir: pathlib.Path):
+    def __init__(self, data_dir: pathlib.Path, epochs=100):
         self.data_dir = data_dir
+        self.epochs = epochs
+
+        print(tf.version.VERSION)
 
         # Set seed for experiment reproducibility
         seed = 42
@@ -25,6 +28,7 @@ class Tensorflow:
         print('Commands:', commands)
 
         filenames = tf.io.gfile.glob(str(data_dir) + '/*/*')
+        print(len(filenames))
         filenames = tf.random.shuffle(filenames)
         num_samples = len(filenames)
         print('Number of total examples:', num_samples)
@@ -32,9 +36,13 @@ class Tensorflow:
               len(tf.io.gfile.listdir(str(data_dir / commands[0]))))
         print('Example file tensor:', filenames[0])
 
-        train_files = filenames[:120]
-        val_files = filenames[120: 120 + 40]
-        test_files = filenames[-40:]
+        __training_set_size = len(filenames) - round(len(filenames)/10) * 2
+        __validation_set_size = round(len(filenames)/10) * 1
+        __test_set_size = round(len(filenames)/10) * 1
+
+        train_files = filenames[:__training_set_size]
+        val_files = filenames[__training_set_size: __training_set_size + __validation_set_size]
+        test_files = filenames[-__test_set_size:]
 
         print('Training set size', len(train_files))
         print('Validation set size', len(val_files))
@@ -70,7 +78,7 @@ class Tensorflow:
             c = i % cols
             ax = axes[r][c]
             ax.plot(audio.numpy())
-            ax.set_yticks(np.arange(-0.05, 0.05, 0.01))
+            ax.set_yticks(np.arange(-0.5, 0.5, 0.1))
             label = label.numpy().decode('utf-8')
             ax.set_title(label)
 
@@ -78,14 +86,14 @@ class Tensorflow:
 
         def get_spectrogram(waveform):
             # Padding for files with less than 16000 samples
-            zero_padding = tf.zeros([16000] - tf.shape(waveform), dtype=tf.float32)
+            zero_padding = tf.zeros([128] - tf.shape(waveform), dtype=tf.float32)
 
             # Concatenate audio with padding so that all audio clips will be of the
             # same length
             waveform = tf.cast(waveform, tf.float32)
             equal_length = tf.concat([waveform, zero_padding], 0)
             spectrogram = tf.signal.stft(
-                equal_length, frame_length=255, frame_step=128)
+                equal_length, frame_length=32, frame_step=16)
 
             spectrogram = tf.abs(spectrogram)
 
@@ -99,7 +107,7 @@ class Tensorflow:
         print('Waveform shape:', waveform.shape)
         print('Spectrogram shape:', spectrogram.shape)
         print('Audio playback')
-        display.display(display.Audio(waveform, rate=16000))
+        display.display(display.Audio(waveform, rate=20000000))
 
         def plot_spectrogram(spectrogram, ax):
             # Convert to frequencies to log scale and transpose so that the time is
@@ -115,7 +123,7 @@ class Tensorflow:
         timescale = np.arange(waveform.shape[0])
         axes[0].plot(timescale, waveform.numpy())
         axes[0].set_title('Waveform')
-        axes[0].set_xlim([0, 16000])
+        axes[0].set_xlim([0, 128])
         plot_spectrogram(spectrogram.numpy(), axes[1])
         axes[1].set_title('Spectrogram')
         plt.show()
@@ -191,11 +199,10 @@ class Tensorflow:
             metrics=['accuracy'],
         )
 
-        EPOCHS = 10
         history = model.fit(
             train_ds,
             validation_data=val_ds,
-            epochs=EPOCHS,
+            epochs=epochs,
             callbacks=tf.keras.callbacks.EarlyStopping(verbose=1, patience=2),
         )
 
