@@ -17,9 +17,14 @@ class ISO14443:
         self.picc_freq = cent_freq/16
         self.reqa_time = 1152/13560000  # 1152/cent_freq 녹음 환경 조건
         self.reqa_down_to_down_time = 1056/13560000  # 1056/cent_freq 녹음 환경 조건
-        self.ataq_time = 2432/cent_freq
+        self.atqa_time = 2432 / cent_freq
         self.fraim_delay_time = 1172/cent_freq  # 1172
-        self.reqa_to_ataq = self.reqa_down_to_down_time + self.fraim_delay_time + self.ataq_time
+        self.reqa_to_ataq = self.reqa_down_to_down_time + self.fraim_delay_time + self.atqa_time
+
+        self.atqa_finder = [1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0]  # USE RFU, PARITY, Proprietary coding
+
+
+        # np.repeat([1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0], samp_rate*64//cent_freq
 
 
 class Signal:
@@ -120,6 +125,7 @@ def get_sync_sample_position(first_signal: Signal, second_signal: Signal):
 class SignalModel:
     def __init__(self, cent_freq):
         self.signal_data = []
+        self.cent_freq = cent_freq
         self.iso14443 = ISO14443(cent_freq)
 
     def open_wav_folders(self, folder_path):
@@ -132,7 +138,7 @@ class SignalModel:
 
     def read_wav_file(self, file_path):
         __sample_rate = wavfile.read(file_path)[0]
-        __data = wavfile.read(file_path)[1] # numpay 배열
+        __data = wavfile.read(file_path)[1]
 
         __current_signal = Signal(__sample_rate, __data, file_path)
 
@@ -154,7 +160,7 @@ class SignalModel:
             __file_path = PurePath(signal.label + '_' + str(__data_num) + '.wav')
         wavfile.write(dir_path/__file_path, signal.samplerate, signal.data.astype(np.int16))
 
-    def get_reqa_atqa_start_position(self, signal: Signal, reqa_amp, ataq_amp):
+    def get_reqa_start_position(self, signal: Signal, reqa_amp, ataq_amp):
 
         __reqa_start_position = []
 
@@ -162,9 +168,10 @@ class SignalModel:
         __reqa_down_to_down_sample_count = int(signal.samplerate * self.iso14443.reqa_down_to_down_time) # 소수점 버림
         __reqa_to_ataq_sample_count = int(signal.samplerate * self.iso14443.reqa_to_ataq)
         __fraim_delay_sample_count = int(signal.samplerate * self.iso14443.fraim_delay_time)
-        __ataq_sample_count = int(signal.samplerate * self.iso14443.ataq_time)
+        __ataq_sample_count = int(signal.samplerate * self.iso14443.atqa_time)
+        __atqa_finder = np.repeat(self.iso14443.atqa_finder, round(signal.samplerate * 64 / self.cent_freq))
 
-        __amp_threshold = (ataq_amp + reqa_amp) * 32767.5 - 0.5
+        __amp_threshold = ((ataq_amp + reqa_amp) * 32767.5 - 0.5 ) /2
 
         # draft_position
         __draft_reqa_start = []
@@ -173,9 +180,9 @@ class SignalModel:
 
         while __draft_position < __end:
             __current_max = np.max(signal.data[__draft_position:__draft_position+__reqa_to_ataq_sample_count])
-            __current_min = np.min(signal.data[__draft_position:__draft_position+__reqa_to_ataq_sample_count])
-            if __current_max - __current_min > __amp_threshold:
-                if int(__end * 0.01) < __draft_position - __reqa_down_to_down_sample_count < int(__end*0.99) and self.have_reqa_ataq(signal, __draft_position):
+            if __current_max > __amp_threshold:
+                print(__current_max, __amp_threshold)
+                if int(__end * 0.01) < __draft_position - __reqa_down_to_down_sample_count < int(__end * 0.99):
                     __draft_reqa_start.append(__draft_position - __reqa_down_to_down_sample_count)
                 __draft_position += __reqa_to_ataq_sample_count
             else:
@@ -193,7 +200,7 @@ class SignalModel:
                 if __current_max - __current_min > __amp_threshold:
                     __current_abs_mean_fdt = np.mean(np.abs(signal.data[
                                                         __i + __reqa_down_to_down_sample_count + __fraim_delay_sample_count//10:
-                                                        __i + __reqa_down_to_down_sample_count + __fraim_delay_sample_count - __fraim_delay_sample_count//10
+                                                        __i + __reqa_down_to_down_sample_count + __fraim_delay_sample_count - __fraim_delay_sample_count//20
                                                         ]))
                     __current_abs_mean_atqa = np.mean(np.abs(signal.data[
                                                         __i + __reqa_down_to_down_sample_count + __fraim_delay_sample_count - __ataq_sample_count//608:
@@ -205,7 +212,7 @@ class SignalModel:
                         __detail_position = __i + __j
                         __abs_mean_fdt = np.mean(np.abs(signal.data[
                                                     __detail_position + __reqa_down_to_down_sample_count + __fraim_delay_sample_count//10:
-                                                    __detail_position + __reqa_down_to_down_sample_count + __fraim_delay_sample_count - __fraim_delay_sample_count//10
+                                                    __detail_position + __reqa_down_to_down_sample_count + __fraim_delay_sample_count - __fraim_delay_sample_count//20
                                                     ]))
                         __abs_mean_atqa = np.mean(np.abs(signal.data[
                                                     __detail_position + __reqa_down_to_down_sample_count + __fraim_delay_sample_count - __ataq_sample_count//608:
@@ -225,7 +232,7 @@ class SignalModel:
 
     def have_reqa_ataq(self, signal:Signal, reqa_start_position: int):
         __FRAIM_DELAY_SAMPLE = int(signal.samplerate * self.iso14443.fraim_delay_time)
-        __ATQA_SAMPLE = int(signal.samplerate * self.iso14443.ataq_time)
+        __ATQA_SAMPLE = int(signal.samplerate * self.iso14443.atqa_time)
         __REQA_SAMPLE = int(signal.samplerate * self.iso14443.reqa_down_to_down_time)
 
         __FDT_MARGIN = int(__FRAIM_DELAY_SAMPLE * 0.05)  # 5% 여유
@@ -233,14 +240,10 @@ class SignalModel:
                                 reqa_start_position + __REQA_SAMPLE + __FDT_MARGIN:
                                 reqa_start_position + __REQA_SAMPLE + __FRAIM_DELAY_SAMPLE - __FDT_MARGIN
                                 ])
-        __FDT_TIME_MIN = np.min(signal.data[
-                                reqa_start_position + __REQA_SAMPLE + __FDT_MARGIN:
-                                reqa_start_position + __REQA_SAMPLE + __FRAIM_DELAY_SAMPLE - __FDT_MARGIN
-                                ])
 
         __ATQA_SAMPLE_FROM_REQA = reqa_start_position + int(signal.samplerate * (self.iso14443.reqa_down_to_down_time + self.iso14443.fraim_delay_time))
         __ATQA = signal.data[__ATQA_SAMPLE_FROM_REQA:__ATQA_SAMPLE_FROM_REQA + __ATQA_SAMPLE]
-        return (__FDT_TIME_MAX - __FDT_TIME_MIN) * 2 < np.max(__ATQA) - np.min(__ATQA)
+        return __FDT_TIME_MAX * 2 < np.max(__ATQA)
 
     def get_current_label_list(self):
         __current_date = self.signal_data

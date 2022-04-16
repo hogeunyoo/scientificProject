@@ -12,39 +12,107 @@ from SignalModel import SignalModel, Signal
 
 class MainViewController:
     def __init__(self):
+        #
+        # band_pass
+        # self.split_signal(cent_freq=12712500,
+        #                   band_real_signal_path='./data/bandpass/sam/sam_bp_1271',
+        #                   target_signal_path='./data/bandpass/sam/sam_bp_1271',
+        #                   reqa_amp=0.12, atqa_amp=0.045)
+        #
+        # self.split_signal(cent_freq=13560000,
+        #                   band_real_signal_path='./data/bandpass/sam/sam_bp_1356',
+        #                   target_signal_path='./data/bandpass/sam/sam_bp_1356',
+        #                   reqa_amp=0.15, atqa_amp=0.14)
 
-        self.split_signal(11865000, './data/ori_sig/sam/band_real/sam_band_1186', 0.48, 0.23)
-        self.split_signal(12712500, './data/ori_sig/sam/band_real/sam_band_1271', 0.00, 0.23)
-        self.split_signal(13560000, './data/ori_sig/sam/band_real/sam_band_1356', 0.7, 0.3)
-        self.split_signal(14407500, './data/ori_sig/sam/band_real/sam_band_1440', 0.55, 0.25)
-        self.split_signal(15255000, './data/ori_sig/sam/band_real/sam_band_1525', 0.53, 0.18)
-        self.split_signal(16102500, './data/ori_sig/sam/band_real/sam_band_1610', 0.4, 0.15)
 
-        self.split_signal(11865000, './data/ori_sig/white/white_band_real/white_band_1186', 0.57, 0.21)
-        self.split_signal(12712500, './data/ori_sig/white/white_band_real/white_band_1271', 0.8, 0.5)
-        self.split_signal(13560000, './data/ori_sig/white/white_band_real/white_band_1356', 1, 0.6)
-        self.split_signal(14407500, './data/ori_sig/white/white_band_real/white_band_1440', 1, 0.5)
-        self.split_signal(15255000, './data/ori_sig/white/white_band_real/white_band_1525', 0.7, 0.35)
-        self.split_signal(16102500, './data/ori_sig/white/white_band_real/white_band_1610', 0.4, 0.25)
 
-        self.show_plot(11865000)
-        self.show_plot(12712500)
+        # self.split_signal(cent_freq=13560000,
+        #                   band_real_signal_path='./data/bandpass/pika/pika_bp_1356',
+        #                   target_signal_path='./data/bandpass/pika/pika_bp_1356',
+        #                   reqa_amp=0.19, atqa_amp=0.07)
+        #
+        # self.split_signal(cent_freq=13560000,
+        #                   band_real_signal_path='./data/bandpass/sanggu/sanggu_bp_1356',
+        #                   target_signal_path='./data/bandpass/sanggu/sanggu_bp_1356',
+        #                   reqa_amp=0.24, atqa_amp=0.17)
+
+
+        # self.split_signal(cent_freq=12712500,
+        #                   band_real_signal_path='./data/bandpass/pika/pika_bp_1271',
+        #                   target_signal_path='./data/bandpass/pika/pika_bp_1271',
+        #                   reqa_amp=0.12, atqa_amp=0.045)
+
+        # self.split_signal(cent_freq=12712500,
+        #                   band_real_signal_path='./data/bandpass/sanggu/sanggu_bp_1271',
+        #                   target_signal_path='./data/bandpass/sanggu/sanggu_bp_1271',
+        #                   reqa_amp=0.15, atqa_amp=0.14))
+
+        # self.split_signal(cent_freq=12712500,
+        #                   band_real_signal_path='./data/bandpass/line1/line1_bp_1271',
+        #                   target_signal_path='./data/bandpass/line1/line1_bp_1271',
+        #                   reqa_amp=0.125, atqa_amp=0.1)
+        #
+        #
+        # self.split_signal(cent_freq=12712500,
+        #                   band_real_signal_path='./data/bandpass/line2/line2_bp_1271',
+        #                   target_signal_path='./data/bandpass/line2/line2_bp_1271',
+        #                   reqa_amp=0.125, atqa_amp=0.1)
+
+
+        # self.split_signal(cent_freq=14407500,
+        #                   band_real_signal_path='./data/bandpass/line1/line1_bp_1525',
+        #                   target_signal_path='./data/bandpass/line1/line1_bp_1525',
+        #                   reqa_amp=0.2, atqa_amp=0.12)
+        #
+        #
+        # self.split_signal(cent_freq=14407500,
+        #                   band_real_signal_path='./data/bandpass/line2/line2_bp_1525',
+        #                   target_signal_path='./data/bandpass/line2/line2_bp_1525',
+        #                   reqa_amp=0.2, atqa_amp=0.12)
+
+        # self.split_signal(cent_freq=12712500,
+        #                   band_real_signal_path='./data/ori_sig/sam/band_real/sam_band_1271',
+        #                   target_signal_path='./data/ori_sig/sam/original/sam_1271',
+        #                   reqa_amp=0.55, atqa_amp=0.23)
+        # self.split_signal(cent_freq=13560000,
+        #                   band_real_signal_path='./data/ori_sig/sam/band_real/sam_band_1356',
+        #                   target_signal_path='./data/ori_sig/sam/original/sam_1356',
+        #                   reqa_amp=0.7, atqa_amp=0.3)
+        # self.split_signal(cent_freq=14407500,
+        #                   band_real_signal_path='./data/ori_sig/sam/band_real/sam_band_1440',
+        #                   target_signal_path='./data/ori_sig/sam/original/sam_1440',
+        #                   reqa_amp=0.55, atqa_amp=0.25)
+        # self.split_signal(cent_freq=15255000,
+        #                   band_real_signal_path='./data/ori_sig/sam/band_real/sam_band_1525',
+        #                   target_signal_path='./data/ori_sig/sam/original/sam_1525',
+        #                   reqa_amp=0.53, atqa_amp=0.18)
+        # self.split_signal(cent_freq=16102500,
+        #                   band_real_signal_path='./data/ori_sig/sam/band_real/sam_band_1610',
+        #                   target_signal_path='./data/ori_sig/sam/original/sam_1525',
+        #                   reqa_amp=0.4, atqa_amp=0.15)
+
+        # self.show_plot(11865000)
+        # self.show_plot(12712500)
         self.show_plot(13560000)
-        self.show_plot(13560000)
-        self.show_plot(14407500)
+        # self.show_plot(14407500)
         self.show_plot(15255000)
-        self.show_plot(16102500)
+        # self.show_plot(16102500)
 
-    def split_signal(self, cent_freq, original_signal_path, reqa_amp, ataq_amp):
+    def split_signal(self, cent_freq, band_real_signal_path, target_signal_path, reqa_amp, atqa_amp):
+        __model_for_reqa_finder = SignalModel(cent_freq)
+        __model_for_reqa_finder.open_wav_folders(band_real_signal_path)
+
+        __reqa_start_posion = []
+        for signal in __model_for_reqa_finder.signal_data:
+            __reqa_start_posion = __model_for_reqa_finder.get_reqa_start_position(signal, reqa_amp, atqa_amp)
+
         __model = SignalModel(cent_freq)
-        __model.open_wav_folders(original_signal_path)
-
+        __model.open_wav_folders(target_signal_path)
         for signal in __model.signal_data:
-            __reqa_start_posions = __model.get_reqa_atqa_start_position(signal, reqa_amp, ataq_amp)
-            if len(__reqa_start_posions) > 1:
-                for __reqa_start_posion in __reqa_start_posions:
-                    __start = int(__reqa_start_posion + signal.samplerate*(__model.iso14443.reqa_down_to_down_time + __model.iso14443.fraim_delay_time - __model.iso14443.ataq_time/16))
-                    __stop = int(__start + signal.samplerate * (__model.iso14443.ataq_time + __model.iso14443.ataq_time/8))
+            if len(__reqa_start_posion) > 1:
+                for start_posion in __reqa_start_posion:
+                    __start = int(start_posion + signal.samplerate * (__model.iso14443.reqa_down_to_down_time + __model.iso14443.fraim_delay_time - __model.iso14443.atqa_time / 16))
+                    __stop = int(__start + signal.samplerate * (__model.iso14443.atqa_time + __model.iso14443.atqa_time / 8))
                     __model.write_wav_file(
                         Signal(signal.samplerate,
                                signal.data[__start:__stop],
@@ -61,11 +129,10 @@ class MainViewController:
             for forder_path in atqa_data_dir.glob(f'*_{cent_freq//10000}'):
                 __model.open_wav_folders(forder_path)
 
-
-
         __model.get_normalized_data()
 
         __label_list = __model.get_current_label_list()
+        # plt.plot(__model.signal_data[3].hilbert_envelope(), color='C%d' % __label_list.index(__model.signal_data[1].label))
         for signal in __model.signal_data:
             plt.plot(signal.data, color='C%d' % __label_list.index(signal.label))
 
