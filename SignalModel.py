@@ -3,13 +3,6 @@ from scipy.io import wavfile
 from scipy.signal import lfilter, butter, hilbert
 import numpy as np
 
-# PICC_FREQ = 847500 # fc/16 Hz
-# REQA_TIME = 0.000084955752212 # s 1152/fc
-# REQA_DOWN_TO_DOWN_TIME = 0.000077876106194 # s 1056/fc
-# ATAQ_TIME = 0.000179351032448 # s 2432/fc
-#
-# FRAIM_DELAY_TIME = 0.000086430678466 # REQA TO ATAQ 1172/fc
-
 
 class ISO14443:
     def __init__(self, cent_freq):
@@ -21,11 +14,6 @@ class ISO14443:
         self.fraim_delay_time = 1172/cent_freq  # 1172
         self.reqa_to_ataq = self.reqa_down_to_down_time + self.fraim_delay_time + self.atqa_time
 
-        self.atqa_finder = [1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0]  # USE RFU, PARITY, Proprietary coding
-
-
-        # np.repeat([1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0], samp_rate*64//cent_freq
-
 
 class Signal:
     def __init__(self, samplerate, data, file_path):
@@ -33,9 +21,6 @@ class Signal:
         self.data = data.astype(np.float64)
         self.file_path = file_path
         self.label = file_path.parent.name
-
-    def ATQA_SAMPLE_SIZE(self):
-        return round(1 / 847500 * 8 * self.samplerate * 18.5)
 
     def butter_bandpass_filter(self, lowcut, highcut, order=1):
         nyq = 0.5 * self.samplerate
@@ -51,76 +36,6 @@ class Signal:
         return amplitude_envelope
 
 
-"""
-def default_normalized_signal(first_signal, second_signal, accuracy=1000, sample_size=3493):
-    __first_sink, __second_sink = get_sync_sample_position(first_signal, second_signal)
-
-    filtered_first_signal = first_signal.butter_bandpass_filter(
-        lowcut=PICC_FREQ - PICC_FREQ / 2,
-        highcut=PICC_FREQ + PICC_FREQ / 2,
-        order=1)
-    filtered_second_signal = second_signal.butter_bandpass_filter(
-        lowcut=PICC_FREQ - PICC_FREQ / 2,
-        highcut=PICC_FREQ + PICC_FREQ / 2,
-        order=1)
-
-    __ratio = 0
-    __find_min_value = 100000000
-
-    for amp in range(accuracy):
-        if __find_min_value > (
-                filtered_first_signal[__first_sink:__first_sink + sample_size] -
-                filtered_second_signal[__second_sink:__second_sink + sample_size] *
-                10 * amp / accuracy).std():
-            __find_min_value = (
-                    filtered_first_signal[__first_sink:__first_sink + sample_size] -
-                    filtered_second_signal[__second_sink:__second_sink + sample_size] *
-                    10 * amp / accuracy).std()
-            __ratio = 10 * amp / accuracy
-    return __ratio
-
-
-def get_sync_sample_position(first_signal: Signal, second_signal: Signal):
-    filtered_first_signal = first_signal.butter_bandpass_filter(
-        lowcut=PICC_FREQ - PICC_FREQ / 2,
-        highcut=PICC_FREQ + PICC_FREQ / 2,
-        order=1)
-    filtered_second_signal = second_signal.butter_bandpass_filter(
-        lowcut=PICC_FREQ - PICC_FREQ / 2,
-        highcut=PICC_FREQ + PICC_FREQ / 2,
-        order=1)
-
-    first_ATQA_sample_position = 0
-    second_ATQA_sample_posion = 0
-
-    __find_max_value_one = 0
-    __find_max_value_two = 0
-
-    __value = 100000000
-
-    for i in range(len(filtered_first_signal) - first_signal.ATQA_SAMPLE_SIZE()):
-        if __find_max_value_one < np.abs(filtered_first_signal[i:i + first_signal.ATQA_SAMPLE_SIZE() - 1]).sum():
-            first_ATQA_sample_position = i
-            __find_max_value_one = np.abs(filtered_first_signal[i:i + first_signal.ATQA_SAMPLE_SIZE() - 1]).sum()
-
-    for j in range(len(filtered_second_signal) - second_signal.ATQA_SAMPLE_SIZE()):
-        if __find_max_value_two < np.abs(filtered_second_signal[j:j + second_signal.ATQA_SAMPLE_SIZE() - 1]).sum():
-            __find_max_value_two = np.abs(filtered_second_signal[j:j + second_signal.ATQA_SAMPLE_SIZE() - 1]).sum()
-
-    __ratio = __find_max_value_one / __find_max_value_two
-
-    filtered_second_signal = filtered_second_signal * __ratio
-
-    for second_signal_sample in range(len(filtered_second_signal) - second_signal.ATQA_SAMPLE_SIZE()):
-        a = (filtered_first_signal[first_ATQA_sample_position:first_ATQA_sample_position + first_signal.ATQA_SAMPLE_SIZE() - 1] -
-             filtered_second_signal[second_signal_sample:second_signal_sample + first_signal.ATQA_SAMPLE_SIZE() - 1]
-             ).std()
-        if __value > a:
-            __value = a
-            second_ATQA_sample_posion = second_signal_sample
-
-    return first_ATQA_sample_position, second_ATQA_sample_posion
-"""
 
 class SignalModel:
     def __init__(self, cent_freq):
@@ -150,8 +65,8 @@ class SignalModel:
         else:
             self.signal_data.append(__current_signal)
 
-    def write_wav_file(self, signal: Signal, name: str):
-        dir_path = Path('./data/tensorflow/' + name + '/' + signal.label)
+    def write_wav_file(self, signal: Signal, dir_name: str):
+        dir_path = Path('./data/' + dir_name + signal.label)
         dir_path.mkdir(parents=True, exist_ok=True)
         __data_num = 0
         __file_path = PurePath(signal.label + '_' + str(__data_num) + '.wav')
@@ -160,8 +75,7 @@ class SignalModel:
             __file_path = PurePath(signal.label + '_' + str(__data_num) + '.wav')
         wavfile.write(dir_path/__file_path, signal.samplerate, signal.data.astype(np.int16))
 
-    def get_reqa_start_position(self, signal: Signal, reqa_amp, ataq_amp):
-
+    def get_reqa_start_position(self, signal: Signal):
         __reqa_start_position = []
 
         # constant
@@ -169,9 +83,8 @@ class SignalModel:
         __reqa_to_ataq_sample_count = int(signal.samplerate * self.iso14443.reqa_to_ataq)
         __fraim_delay_sample_count = int(signal.samplerate * self.iso14443.fraim_delay_time)
         __ataq_sample_count = int(signal.samplerate * self.iso14443.atqa_time)
-        __atqa_finder = np.repeat(self.iso14443.atqa_finder, round(signal.samplerate * 64 / self.cent_freq))
 
-        __amp_threshold = ((ataq_amp + reqa_amp) * 32767.5 - 0.5 ) /2
+        __amp_threshold = 0.05 * 32767.5 - 0.5
 
         # draft_position
         __draft_reqa_start = []
@@ -181,7 +94,6 @@ class SignalModel:
         while __draft_position < __end:
             __current_max = np.max(signal.data[__draft_position:__draft_position+__reqa_to_ataq_sample_count])
             if __current_max > __amp_threshold:
-                print(__current_max, __amp_threshold)
                 if int(__end * 0.01) < __draft_position - __reqa_down_to_down_sample_count < int(__end * 0.99):
                     __draft_reqa_start.append(__draft_position - __reqa_down_to_down_sample_count)
                 __draft_position += __reqa_to_ataq_sample_count
@@ -198,28 +110,31 @@ class SignalModel:
                 __current_min = np.min(signal.data[__i:__i+__reqa_down_to_down_sample_count])
 
                 if __current_max - __current_min > __amp_threshold:
-                    __current_abs_mean_fdt = np.mean(np.abs(signal.data[
+                    __current_mean_reqa = np.mean(signal.data[__i:__i + __reqa_down_to_down_sample_count])
+                    __current_abs_mean_fdt = np.mean(signal.data[
                                                         __i + __reqa_down_to_down_sample_count + __fraim_delay_sample_count//10:
-                                                        __i + __reqa_down_to_down_sample_count + __fraim_delay_sample_count - __fraim_delay_sample_count//20
-                                                        ]))
-                    __current_abs_mean_atqa = np.mean(np.abs(signal.data[
+                                                        __i + __reqa_down_to_down_sample_count + __fraim_delay_sample_count - __fraim_delay_sample_count//10
+                                                        ])
+                    __current_abs_mean_atqa = np.mean(signal.data[
                                                         __i + __reqa_down_to_down_sample_count + __fraim_delay_sample_count - __ataq_sample_count//608:
                                                         __i + __reqa_down_to_down_sample_count + __fraim_delay_sample_count + __ataq_sample_count//38 + __ataq_sample_count//608
-                                                        ]))
-                    __found_max = __i, __current_abs_mean_atqa - __current_abs_mean_fdt
+                                                        ])
+                    __found_max = __i, __current_mean_reqa + __current_abs_mean_atqa - __current_abs_mean_fdt
 
                     for __j in range(__reqa_down_to_down_sample_count):
                         __detail_position = __i + __j
+
+                        __mean_reqa = np.mean(signal.data[__detail_position:__detail_position + __reqa_down_to_down_sample_count])
                         __abs_mean_fdt = np.mean(np.abs(signal.data[
                                                     __detail_position + __reqa_down_to_down_sample_count + __fraim_delay_sample_count//10:
-                                                    __detail_position + __reqa_down_to_down_sample_count + __fraim_delay_sample_count - __fraim_delay_sample_count//20
+                                                    __detail_position + __reqa_down_to_down_sample_count + __fraim_delay_sample_count - __fraim_delay_sample_count//10
                                                     ]))
                         __abs_mean_atqa = np.mean(np.abs(signal.data[
                                                     __detail_position + __reqa_down_to_down_sample_count + __fraim_delay_sample_count - __ataq_sample_count//608:
                                                     __detail_position + __reqa_down_to_down_sample_count + __fraim_delay_sample_count + __ataq_sample_count//38 + __ataq_sample_count//608
                                                     ]))
 
-                        __find_max = __abs_mean_atqa - __abs_mean_fdt
+                        __find_max = __mean_reqa + __abs_mean_atqa - __abs_mean_fdt
                         # print(f'{__current_abs_mean}, {__abs_mean}')
                         if __found_max[1] < __find_max and self.have_reqa_ataq(signal, __detail_position):
                             __found_max = __detail_position, __find_max
@@ -235,7 +150,7 @@ class SignalModel:
         __ATQA_SAMPLE = int(signal.samplerate * self.iso14443.atqa_time)
         __REQA_SAMPLE = int(signal.samplerate * self.iso14443.reqa_down_to_down_time)
 
-        __FDT_MARGIN = int(__FRAIM_DELAY_SAMPLE * 0.05)  # 5% 여유
+        __FDT_MARGIN = int(__FRAIM_DELAY_SAMPLE * 0.1)  # 5% 여유
         __FDT_TIME_MAX = np.max(signal.data[
                                 reqa_start_position + __REQA_SAMPLE + __FDT_MARGIN:
                                 reqa_start_position + __REQA_SAMPLE + __FRAIM_DELAY_SAMPLE - __FDT_MARGIN
@@ -243,7 +158,47 @@ class SignalModel:
 
         __ATQA_SAMPLE_FROM_REQA = reqa_start_position + int(signal.samplerate * (self.iso14443.reqa_down_to_down_time + self.iso14443.fraim_delay_time))
         __ATQA = signal.data[__ATQA_SAMPLE_FROM_REQA:__ATQA_SAMPLE_FROM_REQA + __ATQA_SAMPLE]
-        return __FDT_TIME_MAX * 2 < np.max(__ATQA)
+        __REQA = signal.data[reqa_start_position:reqa_start_position+__REQA_SAMPLE]
+        return __FDT_TIME_MAX * 7 < np.max(__ATQA) and __FDT_TIME_MAX * 7 < np.max(__REQA)
+
+    def get_sync_sample_position(self, first_signal: Signal, second_signal: Signal):
+        first_ATQA_sample_position = 0
+        second_ATQA_sample_position = 0
+
+        __find_max_value_one = 0
+        __find_max_value_two = 0
+
+        __value = 100000000
+
+        __first_signal_atqa_samp_count = int(self.iso14443.atqa_time * first_signal.samplerate)
+        for i in range(len(first_signal.data) - __first_signal_atqa_samp_count):
+            if __find_max_value_one < np.abs(first_signal.data[i:i + __first_signal_atqa_samp_count - 1]).sum():
+                first_ATQA_sample_position = i
+                __find_max_value_one = np.abs(first_signal.data[i:i + __first_signal_atqa_samp_count - 1]).sum()
+
+        __second_signal_atqa_samp_count = int(self.iso14443.atqa_time * second_signal.samplerate)
+        for j in range(len(second_signal.data) - __second_signal_atqa_samp_count):
+            if __find_max_value_two < np.abs(second_signal.data[j:j + __second_signal_atqa_samp_count - 1]).sum():
+                __find_max_value_two = np.abs(second_signal.data[j:j + __second_signal_atqa_samp_count - 1]).sum()
+
+        __ratio = __find_max_value_one / __find_max_value_two
+        second_signal.data = second_signal.data * __ratio
+
+        for second_signal_sample in range(len(second_signal.data) - __second_signal_atqa_samp_count):
+            a = (first_signal.data[first_ATQA_sample_position:
+                                   first_ATQA_sample_position + __first_signal_atqa_samp_count - 1] -
+                 second_signal.data[second_signal_sample:
+                                    second_signal_sample + __second_signal_atqa_samp_count - 1]
+                 ).std()
+            if __value > a:
+                __value = a
+                if __value < 1000:
+                    second_ATQA_sample_position = second_signal_sample
+
+            print(__value)
+
+        return first_ATQA_sample_position, second_ATQA_sample_position
+
 
     def get_current_label_list(self):
         __current_date = self.signal_data
@@ -267,6 +222,9 @@ class SignalModel:
         __normalized_data = []
         for signal in __current_data:
             # __data = (signal.data-np.min(signal.data))/np.max(signal.data-np.min(signal.data))
+            print(signal.file_path)
+            print(signal.file_path, np.max(signal.data))
+
             __data = signal.data / np.max(signal.data)
             __normalized_data.append(Signal(signal.samplerate, __data, signal.file_path))
         self.signal_data = __normalized_data

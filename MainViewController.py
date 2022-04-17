@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import sys
-from pathlib import Path
+from pathlib import Path, PurePath
 import numpy as np
 from scipy.io import wavfile
 from scipy.signal import lfilter, butter, hilbert
@@ -12,119 +12,96 @@ from SignalModel import SignalModel, Signal
 
 class MainViewController:
     def __init__(self):
-        #
+        # self.split_signals('line1')
+        # self.split_signals('line2')
+        # self.split_signals('pika')
+        # self.split_signals('sam')
+        # self.split_signals('sanggu')
+        # self.atqa_signal_write_for_tensor(12712500)
+        # self.atqa_signal_write_for_tensor(13136250)
+        # self.atqa_signal_write_for_tensor(13560000)
+        # self.atqa_signal_write_for_tensor(14407500)
+        # self.atqa_signal_write_for_tensor(14831250)
+        # self.atqa_signal_write_for_tensor(15255000)
+        self.show_plot(12712500, PurePath('./data/tensorflow/atqa'))
+        self.show_plot(13136250, PurePath('./data/tensorflow/atqa'))
+        self.show_plot(13560000, PurePath('./data/tensorflow/atqa'))
+        self.show_plot(14407500, PurePath('./data/tensorflow/atqa'))
+        self.show_plot(14831250, PurePath('./data/tensorflow/atqa'))
+        self.show_plot(15255000, PurePath('./data/tensorflow/atqa'))
+
+
+    def split_signals(self, card_name: str):
         # band_pass
-        # self.split_signal(cent_freq=12712500,
-        #                   band_real_signal_path='./data/bandpass/sam/sam_bp_1271',
-        #                   target_signal_path='./data/bandpass/sam/sam_bp_1271',
-        #                   reqa_amp=0.12, atqa_amp=0.045)
-        #
-        # self.split_signal(cent_freq=13560000,
-        #                   band_real_signal_path='./data/bandpass/sam/sam_bp_1356',
-        #                   target_signal_path='./data/bandpass/sam/sam_bp_1356',
-        #                   reqa_amp=0.15, atqa_amp=0.14)
+        self.split_signal(cent_freq=12712500,
+                          band_real_signal_path=f'./data/bandpass/{card_name}/{card_name}_bp_1271',
+                          target_signal_path=f'./data/bandpass/{card_name}/{card_name}_bp_1271')
+        self.split_signal(cent_freq=13136250,
+                          band_real_signal_path=f'./data/bandpass/{card_name}/{card_name}_bp_1356',
+                          target_signal_path=f'./data/bandpass/{card_name}/{card_name}_bp_1356')
+        self.split_signal(cent_freq=13560000,
+                          band_real_signal_path=f'./data/bandpass/{card_name}/{card_name}_bp_1313',
+                          target_signal_path=f'./data/bandpass/{card_name}/{card_name}_bp_1313')
+        self.split_signal(cent_freq=13983750,
+                          band_real_signal_path=f'./data/bandpass/{card_name}/{card_name}_bp_1398',
+                          target_signal_path=f'./data/bandpass/{card_name}/{card_name}_bp_1398')
+        self.split_signal(cent_freq=14407500,
+                          band_real_signal_path=f'./data/bandpass/{card_name}/{card_name}_bp_1440',
+                          target_signal_path=f'./data/bandpass/{card_name}/{card_name}_bp_1440')
+        self.split_signal(cent_freq=14831250,
+                          band_real_signal_path=f'./data/bandpass/{card_name}/{card_name}_bp_1483',
+                          target_signal_path=f'./data/bandpass/{card_name}/{card_name}_bp_1483')
+        self.split_signal(cent_freq=15255000,
+                          band_real_signal_path=f'./data/bandpass/{card_name}/{card_name}_bp_1525',
+                          target_signal_path=f'./data/bandpass/{card_name}/{card_name}_bp_1525')
 
-
-
-        # self.split_signal(cent_freq=13560000,
-        #                   band_real_signal_path='./data/bandpass/pika/pika_bp_1356',
-        #                   target_signal_path='./data/bandpass/pika/pika_bp_1356',
-        #                   reqa_amp=0.19, atqa_amp=0.07)
-        #
-        # self.split_signal(cent_freq=13560000,
-        #                   band_real_signal_path='./data/bandpass/sanggu/sanggu_bp_1356',
-        #                   target_signal_path='./data/bandpass/sanggu/sanggu_bp_1356',
-        #                   reqa_amp=0.24, atqa_amp=0.17)
-
-
-        # self.split_signal(cent_freq=12712500,
-        #                   band_real_signal_path='./data/bandpass/pika/pika_bp_1271',
-        #                   target_signal_path='./data/bandpass/pika/pika_bp_1271',
-        #                   reqa_amp=0.12, atqa_amp=0.045)
-
-        # self.split_signal(cent_freq=12712500,
-        #                   band_real_signal_path='./data/bandpass/sanggu/sanggu_bp_1271',
-        #                   target_signal_path='./data/bandpass/sanggu/sanggu_bp_1271',
-        #                   reqa_amp=0.15, atqa_amp=0.14))
-
-        # self.split_signal(cent_freq=12712500,
-        #                   band_real_signal_path='./data/bandpass/line1/line1_bp_1271',
-        #                   target_signal_path='./data/bandpass/line1/line1_bp_1271',
-        #                   reqa_amp=0.125, atqa_amp=0.1)
-        #
-        #
-        # self.split_signal(cent_freq=12712500,
-        #                   band_real_signal_path='./data/bandpass/line2/line2_bp_1271',
-        #                   target_signal_path='./data/bandpass/line2/line2_bp_1271',
-        #                   reqa_amp=0.125, atqa_amp=0.1)
-
-
-        # self.split_signal(cent_freq=14407500,
-        #                   band_real_signal_path='./data/bandpass/line1/line1_bp_1525',
-        #                   target_signal_path='./data/bandpass/line1/line1_bp_1525',
-        #                   reqa_amp=0.2, atqa_amp=0.12)
-        #
-        #
-        # self.split_signal(cent_freq=14407500,
-        #                   band_real_signal_path='./data/bandpass/line2/line2_bp_1525',
-        #                   target_signal_path='./data/bandpass/line2/line2_bp_1525',
-        #                   reqa_amp=0.2, atqa_amp=0.12)
-
-        # self.split_signal(cent_freq=12712500,
-        #                   band_real_signal_path='./data/ori_sig/sam/band_real/sam_band_1271',
-        #                   target_signal_path='./data/ori_sig/sam/original/sam_1271',
-        #                   reqa_amp=0.55, atqa_amp=0.23)
-        # self.split_signal(cent_freq=13560000,
-        #                   band_real_signal_path='./data/ori_sig/sam/band_real/sam_band_1356',
-        #                   target_signal_path='./data/ori_sig/sam/original/sam_1356',
-        #                   reqa_amp=0.7, atqa_amp=0.3)
-        # self.split_signal(cent_freq=14407500,
-        #                   band_real_signal_path='./data/ori_sig/sam/band_real/sam_band_1440',
-        #                   target_signal_path='./data/ori_sig/sam/original/sam_1440',
-        #                   reqa_amp=0.55, atqa_amp=0.25)
-        # self.split_signal(cent_freq=15255000,
-        #                   band_real_signal_path='./data/ori_sig/sam/band_real/sam_band_1525',
-        #                   target_signal_path='./data/ori_sig/sam/original/sam_1525',
-        #                   reqa_amp=0.53, atqa_amp=0.18)
-        # self.split_signal(cent_freq=16102500,
-        #                   band_real_signal_path='./data/ori_sig/sam/band_real/sam_band_1610',
-        #                   target_signal_path='./data/ori_sig/sam/original/sam_1525',
-        #                   reqa_amp=0.4, atqa_amp=0.15)
-
-        # self.show_plot(11865000)
-        # self.show_plot(12712500)
-        self.show_plot(13560000)
-        # self.show_plot(14407500)
-        self.show_plot(15255000)
-        # self.show_plot(16102500)
-
-    def split_signal(self, cent_freq, band_real_signal_path, target_signal_path, reqa_amp, atqa_amp):
+    def split_signal(self, cent_freq, band_real_signal_path, target_signal_path):
         __model_for_reqa_finder = SignalModel(cent_freq)
         __model_for_reqa_finder.open_wav_folders(band_real_signal_path)
 
         __reqa_start_posion = []
         for signal in __model_for_reqa_finder.signal_data:
-            __reqa_start_posion = __model_for_reqa_finder.get_reqa_start_position(signal, reqa_amp, atqa_amp)
+            __reqa_start_posion = __model_for_reqa_finder.get_reqa_start_position(signal)
 
         __model = SignalModel(cent_freq)
         __model.open_wav_folders(target_signal_path)
         for signal in __model.signal_data:
             if len(__reqa_start_posion) > 1:
                 for start_posion in __reqa_start_posion:
-                    __start = int(start_posion + signal.samplerate * (__model.iso14443.reqa_down_to_down_time + __model.iso14443.fraim_delay_time - __model.iso14443.atqa_time / 16))
-                    __stop = int(__start + signal.samplerate * (__model.iso14443.atqa_time + __model.iso14443.atqa_time / 8))
+                    __start = int(start_posion + signal.samplerate * (__model.iso14443.reqa_down_to_down_time + __model.iso14443.fraim_delay_time - __model.iso14443.atqa_time / 4))
+                    __stop = int(__start + signal.samplerate * (__model.iso14443.atqa_time + __model.iso14443.atqa_time / 2))
                     __model.write_wav_file(
                         Signal(signal.samplerate,
                                signal.data[__start:__stop],
                                signal.file_path
                                ),
-                        'atqa'
+                        'separate/'
                     )
 
-    def show_plot(self, cent_freq):
+    def atqa_signal_write_for_tensor(self, cent_freq):
         __model = SignalModel(cent_freq)
 
-        atqa_data_dir = Path('./data/tensorflow/atqa')
+        reqa_atqa_data_dir = Path('./data/separate')
+        if reqa_atqa_data_dir.is_dir():
+            for forder_path in reqa_atqa_data_dir.glob(f'*_{cent_freq//10000}'):
+                __model.open_wav_folders(forder_path)
+
+        __label_list = __model.get_current_label_list()
+        for signal in __model.signal_data:
+            __atqa_sample_count = int(__model.iso14443.atqa_time * signal.samplerate)
+            __base_sink, __target_sink = __model.get_sync_sample_position(__model.signal_data[1], signal)
+            if len(signal.data[__target_sink - __atqa_sample_count//19:__target_sink + __atqa_sample_count + __atqa_sample_count//19]) == __atqa_sample_count + 2*(__atqa_sample_count//19):
+                __model.write_wav_file(Signal(samplerate=signal.samplerate,
+                                              data=signal.data[__target_sink - __atqa_sample_count//19:
+                                                               __target_sink + __atqa_sample_count + __atqa_sample_count//19],
+                                              file_path=signal.file_path
+                                              ),
+                                       'tensorflow/atqa/')
+
+    def show_plot(self, cent_freq, dir_path: PurePath):
+        __model = SignalModel(cent_freq)
+
+        atqa_data_dir = Path(dir_path)
         if atqa_data_dir.is_dir():
             for forder_path in atqa_data_dir.glob(f'*_{cent_freq//10000}'):
                 __model.open_wav_folders(forder_path)
@@ -132,7 +109,6 @@ class MainViewController:
         __model.get_normalized_data()
 
         __label_list = __model.get_current_label_list()
-        # plt.plot(__model.signal_data[3].hilbert_envelope(), color='C%d' % __label_list.index(__model.signal_data[1].label))
         for signal in __model.signal_data:
             plt.plot(signal.data, color='C%d' % __label_list.index(signal.label))
 
