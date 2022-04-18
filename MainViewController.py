@@ -23,13 +23,13 @@ class MainViewController:
         # self.atqa_signal_write_for_tensor(14407500)
         # self.atqa_signal_write_for_tensor(14831250)
         # self.atqa_signal_write_for_tensor(15255000)
-        self.show_plot(12712500, PurePath('./data/tensorflow/atqa'))
-        self.show_plot(13136250, PurePath('./data/tensorflow/atqa'))
-        self.show_plot(13560000, PurePath('./data/tensorflow/atqa'))
-        self.show_plot(14407500, PurePath('./data/tensorflow/atqa'))
-        self.show_plot(14831250, PurePath('./data/tensorflow/atqa'))
-        self.show_plot(15255000, PurePath('./data/tensorflow/atqa'))
-
+        # self.show_plot(12712500, PurePath('./data/tensorflow/atqa/'))
+        # self.show_plot(13136250, PurePath('./data/tensorflow/atqa'))
+        self.show_plot(13560000, PurePath('./data/tensorflow/atqa/1356'))
+        # self.show_plot(14407500, PurePath('./data/tensorflow/atqa'))
+        # self.show_plot(14831250, PurePath('./data/tensorflow/atqa'))
+        # self.show_plot(15255000, PurePath('./data/tensorflow/atqa'))
+        # Tensorflow(data_dir=Path('./data/tensorflow/atqa/1356'))
 
     def split_signals(self, card_name: str):
         # band_pass
