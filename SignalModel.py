@@ -36,7 +36,6 @@ class Signal:
         return amplitude_envelope
 
 
-
 class SignalModel:
     def __init__(self, cent_freq):
         self.signal_data = []
@@ -161,7 +160,7 @@ class SignalModel:
         __REQA = signal.data[reqa_start_position:reqa_start_position+__REQA_SAMPLE]
         return __FDT_TIME_MAX * 7 < np.max(__ATQA) and __FDT_TIME_MAX * 7 < np.max(__REQA)
 
-    def get_sync_sample_position(self, first_signal: Signal, second_signal: Signal):
+    def get_sync_sample_position(self, first_signal: Signal, second_signal: Signal, tolerance: int):
         first_ATQA_sample_position = 0
         second_ATQA_sample_position = 0
 
@@ -192,7 +191,7 @@ class SignalModel:
                  ).std()
             if __value > a:
                 __value = a
-                if __value < 1000:
+                if __value < tolerance:
                     second_ATQA_sample_position = second_signal_sample
 
             print(__value)
