@@ -205,7 +205,7 @@ class SignalModel:
         for data in __current_date:
             if data.label not in __current_label_list:
                 __current_label_list.append(data.label)
-        print(__current_label_list)
+        __current_label_list.sort()
         return __current_label_list
 
     def get_sorted_list(self, label):

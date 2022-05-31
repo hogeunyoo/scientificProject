@@ -21,16 +21,31 @@ class MainViewController:
         # self.atqa_signal_write_for_tensor(12712500)
         # self.atqa_signal_write_for_tensor(13136250)
         # self.atqa_signal_write_for_tensor(13560000)
+        # self.atqa_signal_write_for_tensor(13983750)
         # self.atqa_signal_write_for_tensor(14407500)
-        # self.atqa_signal_write_for_tensor(14831250)
-        # self.atqa_signal_write_for_tensor(15255000)
         # self.show_plot(12712500, PurePath('./data/tensorflow/atqa/1271'))
         # self.show_plot(13136250, PurePath('./data/tensorflow/atqa'))
         # self.show_plot(13560000, PurePath('./data/tensorflow/atqa/1356'))
-        # self.show_plot(14407500, PurePath('./data/tensorflow/atqa'))
+        # self.show_plot(14407500, PurePath('./data/tensorflow/atqa/1440'))
         # self.show_plot(14831250, PurePath('./data/tensorflow/atqa'))
         # self.show_plot(15255000, PurePath('./data/tensorflow/atqa'))
-        Tensorflow(data_dir=Path('./data/tensorflow/atqa/1271_tmp'))
+
+        # self.show_plot(12712500, PurePath('/home/pcl621/Developer/script/split/data/separate'))
+        # self.show_mean_plot(12712500, PurePath('./data/tensorflow'))
+        # self.show_mean_plot(13136250, PurePath('./data/tensorflow'))
+        # self.show_mean_plot(13560000, PurePath('./data/tensorflow'))
+        # self.show_mean_plot(13983750, PurePath('./data/tensorflow'))
+        # self.show_mean_plot(14407500, PurePath('./data/tensorflow'))
+
+        # self.show_plot(13136250, PurePath('./data/RYAN'))
+        # self.show_plot(13560000, PurePath('./data/RYAN'))
+        # self.show_plot(13983750, PurePath('./data/RYAN'))
+        # self.show_plot(14407500, PurePath('./data/RYAN'))
+        # self.show_plot(13136250, PurePath('/home/pcl621/Developer/script/split/data/separate'))
+        # self.show_plot(13560000, PurePath('/home/pcl621/Developer/script/split/data/separate'))
+        # self.show_plot(13983750, PurePath('/home/pcl621/Developer/script/split/data/separate'))
+        # self.show_plot(14407500, PurePath('/home/pcl621/Developer/script/split/data/separate'))
+        Tensorflow(data_dir=Path('/home/pcl621/Developer/dl-4-tsc-master/archives/Hogeun/RYAN'), target_freq=['1398'])
 
     def split_signals(self, card_name: str):
         # band_pass
@@ -98,37 +113,65 @@ class MainViewController:
     def atqa_signal_write_for_tensor(self, cent_freq):
         __model = SignalModel(cent_freq)
 
-        reqa_atqa_data_dir = Path('./data/separate')
+        reqa_atqa_data_dir = Path('/home/pcl621/Developer/script/split/data/separate')
         if reqa_atqa_data_dir.is_dir():
-            for forder_path in reqa_atqa_data_dir.glob(f'*_{cent_freq//10000}'):
+            for forder_path in reqa_atqa_data_dir.glob(f'*_{cent_freq//10000}_*'):
                 __model.open_wav_folders(forder_path)
 
         __label_list = __model.get_current_label_list()
         for signal in __model.signal_data:
             __atqa_sample_count = int(__model.iso14443.atqa_time * signal.samplerate)
-            __base_sink, __target_sink = __model.get_sync_sample_position(__model.signal_data[1], signal, 900)
+            __base_sink, __target_sink = __model.get_sync_sample_position(__model.signal_data[1], signal, 200000)
             if len(signal.data[__target_sink - __atqa_sample_count//19:__target_sink + __atqa_sample_count + __atqa_sample_count//19]) == __atqa_sample_count + 2*(__atqa_sample_count//19):
                 __model.write_wav_file(Signal(samplerate=signal.samplerate,
                                               data=signal.data[__target_sink - __atqa_sample_count//19:
                                                                __target_sink + __atqa_sample_count + __atqa_sample_count//19],
                                               file_path=signal.file_path
                                               ),
-                                       'tensorflow/atqa/')
+                                       'tensorflow/atqa5/')
 
     def show_plot(self, cent_freq, dir_path: PurePath):
         __model = SignalModel(cent_freq)
 
         atqa_data_dir = Path(dir_path)
         if atqa_data_dir.is_dir():
-            for forder_path in atqa_data_dir.glob(f'*_{cent_freq//10000}*'):
+            for forder_path in atqa_data_dir.glob(f'atqa3/*_{cent_freq//10000}*'):
                 __model.open_wav_folders(forder_path)
 
-        __model.get_normalized_data()
+        # __model.get_normalized_data()
 
         __label_list = __model.get_current_label_list()
         for signal in __model.signal_data:
             plt.plot(signal.data, color='C%d' % __label_list.index(signal.label))
 
+        plt.show()
+
+    def show_mean_plot(self, cent_freq, dir_path: PurePath):
+        __model = SignalModel(cent_freq)
+
+        atqa_data_dir = Path(dir_path)
+        if atqa_data_dir.is_dir():
+            for forder_path in atqa_data_dir.glob(f'atqa2/*_2*_{cent_freq // 10000}*'):
+                __model.open_wav_folders(forder_path)
+
+        # __model.get_normalized_data()
+
+        __label_list = __model.get_current_label_list()
+        for label in __label_list:
+            dataaa = []
+            for signal in __model.signal_data:
+                if signal.label == label:
+                    dataaa.append(signal.data)
+            tmp_array = np.array(dataaa)
+            tmp_array = tmp_array.T
+            ddd = []
+            for tt in tmp_array:
+                tt_max = np.max(tt)
+                tt_min = np.min(tt)
+                ddd.append((tt_min + tt_max)/2)
+            print(f'label:{label}, value = {np.mean(ddd)}')
+            plt.plot(ddd[350:750], label=label)
+            plt.legend()
         plt.show()
 
     def show_enveloped_signal(self):
